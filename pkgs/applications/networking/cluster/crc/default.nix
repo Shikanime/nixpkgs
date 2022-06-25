@@ -5,6 +5,8 @@
 , stdenv
 , testers
 , crc
+, runtimeShell
+, coreutils
 }:
 
 buildGoModule rec {
@@ -15,7 +17,7 @@ buildGoModule rec {
     owner = "code-ready";
     repo = "crc";
     rev = "v${version}";
-    sha256 = "sha256-4ckHvIswVwECAKsa/yN9rJSqZb04ZP1Zomq+1UdT1OY=";
+    sha256 = "4ckHvIswVwECAKsa/yN9rJSqZb04ZP1Zomq+1UdT1OY=";
     # makefile calculates git commit and needs the git folder for it
     leaveDotGit = true;
   };
@@ -25,9 +27,8 @@ buildGoModule rec {
   nativeBuildInputs = [ git ];
 
   buildPhase = ''
-    export HOME=$(mktemp -d)
     runHook preBuild
-    make
+    make HOME=$(mktemp -d) SHELL=${runtimeShell}
     runHook postBuild
   '';
 
@@ -37,7 +38,9 @@ buildGoModule rec {
 
   checkPhase = ''
     runHook preCheck
-    make test
+    substituteInPlace pkg/crc/oc/oc_linux_test.go \
+      --replace "/bin/echo"  "${coreutils}/bin/echo"
+    make test HOME=$(mktemp -d) SHELL=${runtimeShell}
     runHook postCheck
   '';
 
