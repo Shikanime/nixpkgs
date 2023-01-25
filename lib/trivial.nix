@@ -519,4 +519,56 @@ rec {
       assert (base >= 2);
       assert (i >= 0);
       lib.reverseList (go i);
+
+  /* Parse a string of octal or hexadecimal digits into an integer.
+     For example:
+
+     fromHex "0o10" => 8
+
+     fromHex "0x10" => 16
+  */
+  fromHex = str:
+    let
+      fromOctalChar = c:
+        if c == "0" then 0
+        else if c == "1" then 1
+        else if c == "2" then 2
+        else if c == "3" then 3
+        else if c == "4" then 4
+        else if c == "5" then 5
+        else if c == "6" then 6
+        else if c == "7" then 7
+        else throw "invalid octal digit '${c}'";
+
+      fromHexChar = c:
+          if c == "0" then 0
+          else if c == "1" then 1
+          else if c == "2" then 2
+          else if c == "3" then 3
+          else if c == "4" then 4
+          else if c == "5" then 5
+          else if c == "6" then 6
+          else if c == "7" then 7
+          else if c == "8" then 8
+          else if c == "9" then 9
+          else if c == "a" || c == "A" then 10
+          else if c == "b" || c == "B" then 11
+          else if c == "c" || c == "C" then 12
+          else if c == "d" || c == "D" then 13
+          else if c == "e" || c == "E" then 14
+          else if c == "f" || c == "F" then 15
+          else throw "invalid hexadecimal digit '${c}'";
+
+      fromChars = fromChar: base: chars:
+          if length chars > 0
+          then fromChar(lib.lists.last chars) + base * fromOctalChars(lib.lists.init chars)
+          else 0;
+
+      fromString = str: fromOctalChars (lib.strings.toList str);
+    in
+      if lib.strings.hasSuffix str "0x"
+      then fromString fromHexChar 16 (lib.strings.removeSuffix "0x" str)
+      else if lib.strings.hasSuffix str "0o"
+      then fromString fromOctalChar 8 (lib.strings.removeSuffix "0o" str)
+      else throw "invalid hexadecimal string '${str}'";
 }
